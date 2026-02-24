@@ -1,5 +1,5 @@
 import logging
-from extract_load import fetch_articles, load_to_database, get_last_published_timestamp
+from extract_load import fetch_articles, load_to_database, get_last_published_timestamp, get_last_24h_timestamp
 from transform import transform_articles, create_daily_summary
 
 # Set up logging
@@ -10,7 +10,6 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 def run_full_pipeline():
-    """Run the complete ETL pipeline"""
     logger.info("=" * 60)
     logger.info("RUNNING FULL DATA PIPELINE")
     logger.info("=" * 60)
@@ -18,14 +17,16 @@ def run_full_pipeline():
     # Step 1: Extract and Load
     logger.info("\n[1/3] EXTRACT & LOAD")
     logger.info("-" * 60)
-    last_timestamp = get_last_published_timestamp()
+    # last_timestamp = get_last_published_timestamp()
+    last_timestamp = get_last_24h_timestamp()
+
     articles = fetch_articles(from_date=last_timestamp)
     inserted = load_to_database(articles)
     
     if inserted == 0:
         logger.info("No new articles - skipping transformation")
         logger.info("\n" + "=" * 60)
-        logger.info("✓ PIPELINE COMPLETED (No new data)")
+        logger.info("PIPELINE COMPLETED (No new data)")
         logger.info("=" * 60)
         return
     
@@ -40,7 +41,7 @@ def run_full_pipeline():
     create_daily_summary()
     
     logger.info("\n" + "=" * 60)
-    logger.info("✓ FULL PIPELINE COMPLETED SUCCESSFULLY")
+    logger.info("FULL PIPELINE COMPLETED SUCCESSFULLY")
     logger.info("=" * 60)
 
 if __name__ == "__main__":

@@ -3,8 +3,11 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from datetime import datetime
+from dotenv import load_dotenv
+import os
 
-# Set style
+load_dotenv()
+
 sns.set_style("whitegrid")
 plt.rcParams['figure.figsize'] = (12, 6)
 
@@ -13,7 +16,7 @@ def get_connection():
         host="localhost",
         database="news_pipeline",
         user="postgres",
-        password="Reddit00#",
+        password=os.getenv('POSTGRES_PASSWORD'),
         port=5432
     )
 
@@ -56,7 +59,7 @@ def plot_articles_over_time(df):
     plt.grid(True, alpha=0.3)
     plt.tight_layout()
     plt.savefig('articles_over_time.png', dpi=300, bbox_inches='tight')
-    print("✓ Saved: articles_over_time.png")
+    print("Saved: articles_over_time.png")
     plt.close()
 
 # Visualization 2: Top news sources
@@ -73,7 +76,7 @@ def plot_top_sources(df):
     plt.gca().invert_yaxis()
     plt.tight_layout()
     plt.savefig('top_sources.png', dpi=300, bbox_inches='tight')
-    print("✓ Saved: top_sources.png")
+    print("Saved: top_sources.png")
     plt.close()
 
 # Visualization 3: Word count distribution
@@ -92,17 +95,17 @@ def plot_word_count_distribution(df):
     plt.grid(True, alpha=0.3)
     plt.tight_layout()
     plt.savefig('word_count_distribution.png', dpi=300, bbox_inches='tight')
-    print("✓ Saved: word_count_distribution.png")
+    print("Saved: word_count_distribution.png")
     plt.close()
 
 # Visualization 4: Source activity heatmap
 def plot_source_activity_heatmap(summary_df):
     """Heatmap: which sources publish most on which days"""
-    # Pivot data for heatmap
+  
     pivot = summary_df.pivot(index='source_name', columns='date', values='article_count')
     pivot = pivot.fillna(0)
     
-    # Only show top 10 sources
+    
     top_sources = summary_df.groupby('source_name')['article_count'].sum().nlargest(10).index
     pivot = pivot.loc[pivot.index.isin(top_sources)]
     
@@ -114,10 +117,10 @@ def plot_source_activity_heatmap(summary_df):
     plt.xticks(rotation=45)
     plt.tight_layout()
     plt.savefig('source_activity_heatmap.png', dpi=300, bbox_inches='tight')
-    print("✓ Saved: source_activity_heatmap.png")
+    print("Saved: source_activity_heatmap.png")
     plt.close()
 
-# Main execution
+
 if __name__ == "__main__":
     print("="*60)
     print("GENERATING VISUALIZATIONS")
@@ -127,8 +130,8 @@ if __name__ == "__main__":
     df = fetch_data()
     summary_df = fetch_summary()
     
-    print(f"✓ Loaded {len(df)} articles")
-    print(f"✓ Loaded {len(summary_df)} summary records")
+    print(f"Loaded {len(df)} articles")
+    print(f"Loaded {len(summary_df)} summary records")
     
     print("\nCreating visualizations...")
     print("-"*60)
@@ -139,7 +142,7 @@ if __name__ == "__main__":
     plot_source_activity_heatmap(summary_df)
     
     print("\n" + "="*60)
-    print("✓ ALL VISUALIZATIONS CREATED!")
+    print("ALL VISUALIZATIONS CREATED!")
     print("="*60)
     print("\nGenerated files:")
     print("  - articles_over_time.png")

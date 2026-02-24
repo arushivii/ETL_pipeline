@@ -1,19 +1,23 @@
 import psycopg2
 import re
 
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
 def get_connection():
     return psycopg2.connect(
         host="localhost",
         database="news_pipeline",
         user="postgres",
-        password="Reddit00#",
+        password=os.getenv('POSTGRES_PASSWORD'),
         port=5432
     )
 
 def clean_text(text):
     if text is None:
         return None
-    # Remove extra whitespace
     text = re.sub(r'\s+', ' ', text).strip()
     return text
 
@@ -47,7 +51,6 @@ def transform_articles():
         (id, source_id, source_name, author, title, 
          description, url, published_at, content, pulled_at) = article
         
-        # Just clean the text
         cleaned_title = clean_text(title)
         cleaned_description = clean_text(description)
         cleaned_content = clean_text(content)
@@ -73,7 +76,7 @@ def transform_articles():
             continue
     
     conn.commit()
-    print(f"✓ Transformed {len(raw_articles)} articles")
+    print(f"Transformed {len(raw_articles)} articles")
     
     cursor.close()
     conn.close()
@@ -84,7 +87,6 @@ def create_daily_summary():
     
     cursor.execute("DELETE FROM daily_summary")
     
-    # Simpler aggregation without sentiment
     cursor.execute("""
         INSERT INTO daily_summary (date, source_name, article_count)
         SELECT 
@@ -100,7 +102,7 @@ def create_daily_summary():
     
     cursor.execute("SELECT COUNT(*) FROM daily_summary")
     count = cursor.fetchone()[0]
-    print(f"✓ Created {count} daily summary records")
+    print(f" Created {count} daily summary records")
     
     cursor.close()
     conn.close()
@@ -110,4 +112,4 @@ if __name__ == "__main__":
     transform_articles()
     print("\nCreating daily summary...")
     create_daily_summary()
-    print("\n✓ Transformation pipeline completed!")
+    print("\nTransformation pipeline completed!")

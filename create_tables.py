@@ -1,21 +1,22 @@
 import psycopg2
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 conn = psycopg2.connect(
     host="localhost",
     database="news_pipeline",
     user="postgres",
-    password="Reddit00#",
+    password=os.getenv('POSTGRES_PASSWORD'),
     port=5432
 )
 
 cursor = conn.cursor()
 
-# Drop old tables first (clean slate)
 cursor.execute("DROP TABLE IF EXISTS daily_summary")
 cursor.execute("DROP TABLE IF EXISTS cleaned_articles")
-print("✓ Dropped old tables")
 
-# Create cleaned_articles (NO sentiment)
 create_cleaned_articles = """
 CREATE TABLE IF NOT EXISTS cleaned_articles (
     id SERIAL PRIMARY KEY,
@@ -32,7 +33,6 @@ CREATE TABLE IF NOT EXISTS cleaned_articles (
 );
 """
 
-# Create daily_summary (NO sentiment)
 create_daily_summary = """
 CREATE TABLE IF NOT EXISTS daily_summary (
     id SERIAL PRIMARY KEY,
@@ -45,14 +45,14 @@ CREATE TABLE IF NOT EXISTS daily_summary (
 """
 
 cursor.execute(create_cleaned_articles)
-print("✓ cleaned_articles table created")
+print("cleaned_articles table created")
 
 cursor.execute(create_daily_summary)
-print("✓ daily_summary table created")
+print("daily_summary table created")
 
 conn.commit()
 
 cursor.close()
 conn.close()
 
-print("\n✓ All tables created successfully!")
+print("\nAll tables created successfully!")

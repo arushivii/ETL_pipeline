@@ -1,20 +1,21 @@
 import psycopg2
 from psycopg2 import sql
+from dotenv import load_dotenv
+import os
 
-# Connection parameters
+load_dotenv()
+
 conn = psycopg2.connect(
     host="localhost",
-    database="postgres",  # We'll connect to default database first
+    database="postgres",  
     user="postgres",
-    password="Reddit00#",  # Replace with your password!
-    port=5432  # Your port
+    password=os.getenv('POSTGRES_PASSWORD'),  
+    port=5432
 )
 
-# Important: Set autocommit to create database
 conn.autocommit = True
 cursor = conn.cursor()
 
-# Create our database
 try:
     cursor.execute("CREATE DATABASE news_pipeline")
     print("Database 'news_pipeline' created successfully!")

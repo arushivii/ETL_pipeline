@@ -3,3 +3,26 @@ venv/
 __pycache__/
 *.pyc
 *.log
+# Virtual environment
+venv/
+__pycache__/
+
+# Environment variables
+.env
+
+# Logs
+*.log
+
+# Python cache
+*.pyc
+*.pyo
+
+# OS files
+.DS_Store
+
+# Generated visualizations and logs
+articles_over_time.png
+source_activity_heatmap.png
+top_sources.png
+word_count_distribution.png
+pipeline.log

@@ -16,16 +16,15 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 def job():
-    """Run the pipeline job"""
     logger.info("="*70)
     logger.info(f"SCHEDULED RUN STARTED AT {datetime.now()}")
     logger.info("="*70)
     
     try:
         run_full_pipeline()
-        logger.info("✓ Scheduled run completed successfully")
+        logger.info("Scheduled run completed successfully")
     except Exception as e:
-        logger.error(f"✗ Scheduled run failed: {e}")
+        logger.error(f"Scheduled run failed: {e}")
     
     logger.info("="*70)
     logger.info(f"Next run scheduled in 1 hour")
@@ -34,12 +33,11 @@ def job():
 # Schedule the job to run every hour
 schedule.every(2).minutes.do(job)
 
-# Also run immediately on startup
+
 logger.info("Pipeline scheduler started")
 logger.info("Running initial pipeline execution...")
 job()
 
-# Keep the script running
 logger.info("\nScheduler is now running. Press Ctrl+C to stop.")
 logger.info("Pipeline will run every 1 hour.")
 

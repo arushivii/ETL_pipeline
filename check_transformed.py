@@ -1,10 +1,14 @@
 import psycopg2
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 conn = psycopg2.connect(
     host="localhost",
     database="news_pipeline",
     user="postgres",
-    password="Reddit00#",
+    password=os.getenv('POSTGRES_PASSWORD'),
     port=5432
 )
 
@@ -14,7 +18,6 @@ print("=" * 60)
 print("DATA PIPELINE STATUS")
 print("=" * 60)
 
-# Count articles in each layer
 cursor.execute("SELECT COUNT(*) FROM raw_articles")
 raw_count = cursor.fetchone()[0]
 
@@ -29,7 +32,6 @@ print(f"  Raw articles:     {raw_count}")
 print(f"  Cleaned articles: {cleaned_count}")
 print(f"  Summary records:  {summary_count}")
 
-# Show recent articles
 cursor.execute("""
     SELECT source_name, title, word_count, published_at
     FROM cleaned_articles
@@ -37,11 +39,10 @@ cursor.execute("""
     LIMIT 5
 """)
 
-print(f"\n📰 Latest Articles:")
+print(f"\n Latest Articles:")
 for row in cursor.fetchall():
     print(f"  [{row[0]}] {row[1][:50]}... ({row[2]} words)")
 
-# Show daily summary
 cursor.execute("""
     SELECT date, source_name, article_count, avg_word_count
     FROM daily_summary
@@ -49,12 +50,11 @@ cursor.execute("""
     LIMIT 8
 """)
 
-print(f"\n📈 Daily Summary (Top Sources by Date):")
+print(f"\n Daily Summary (Top Sources by Date):")
 for row in cursor.fetchall():
     avg_words = row[3] if row[3] is not None else 0
     print(f"  {row[0]} | {row[1]:20} | {row[2]:2} articles | Avg: {avg_words:4} words")
 
-# Show source distribution
 cursor.execute("""
     SELECT source_name, COUNT(*) as count
     FROM cleaned_articles
@@ -63,7 +63,7 @@ cursor.execute("""
     LIMIT 5
 """)
 
-print(f"\n🏢 Top News Sources:")
+print(f"\n Top News Sources:")
 for row in cursor.fetchall():
     print(f"  {row[0]:30} | {row[1]} articles")
 

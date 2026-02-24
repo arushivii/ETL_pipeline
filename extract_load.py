@@ -5,17 +5,14 @@ import psycopg2
 from datetime import datetime, timezone
 import logging
 
-# Set up logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
 
-# Load environment variables
 load_dotenv()
 
-# Get API key
 api_key = os.getenv('NEWS_API_KEY')
 
 # Database connection
@@ -24,11 +21,18 @@ def get_connection():
         host="localhost",
         database="news_pipeline",
         user="postgres",
-        password="Reddit00#",  # Replace!
+        password=os.getenv('POSTGRES_PASSWORD'),
         port=5432
     )
 
-# Get the most recent article timestamp from database
+def get_last_24h_timestamp():
+    """Get timestamp for 24 hours ago"""
+    from datetime import timedelta
+    
+    timestamp_24h_ago = datetime.now(timezone.utc) - timedelta(hours=24)
+    logger.info(f"Fetching articles from last 24 hours (since {timestamp_24h_ago})")
+    return timestamp_24h_ago
+
 def get_last_published_timestamp():
     try:
         conn = get_connection()
@@ -54,15 +58,11 @@ def get_last_published_timestamp():
         logger.error(f"Error getting last timestamp: {e}")
         return None
 
-# Fetch articles from NewsAPI
 def fetch_articles(from_date=None):
     try:
-        # Base URL
         url = f'https://newsapi.org/v2/top-headlines?country=us&apiKey={api_key}'
         
-        # Add 'from' parameter if we have a date
         if from_date:
-            # Convert to ISO format for API
             from_str = from_date.strftime('%Y-%m-%dT%H:%M:%S')
             url += f'&from={from_str}'
             logger.info(f"Fetching articles from {from_str} onwards")
@@ -73,7 +73,7 @@ def fetch_articles(from_date=None):
         data = response.json()
         
         if data['status'] == 'ok':
-            logger.info(f"✓ Fetched {len(data['articles'])} articles from NewsAPI")
+            logger.info(f"Fetched {len(data['articles'])} articles from NewsAPI")
             return data['articles']
         else:
             logger.error(f"API Error: {data}")
@@ -83,7 +83,6 @@ def fetch_articles(from_date=None):
         logger.error(f"Error fetching articles: {e}")
         return []
 
-# Insert articles into PostgreSQL
 def load_to_database(articles):
     if not articles:
         logger.info("No articles to load")
@@ -99,7 +98,6 @@ def load_to_database(articles):
         
         for article in articles:
             try:
-                # Extract fields from article
                 source_id = article['source']['id']
                 source_name = article['source']['name']
                 author = article.get('author')
@@ -109,10 +107,8 @@ def load_to_database(articles):
                 published_at = article['publishedAt']
                 content = article.get('content')
                 
-                # Convert ISO timestamp to datetime
                 published_dt = datetime.fromisoformat(published_at.replace('Z', '+00:00'))
                 
-                # Insert into database
                 insert_query = """
                     INSERT INTO raw_articles 
                     (source_id, source_name, author, title, description, url, published_at, content)
@@ -138,13 +134,12 @@ def load_to_database(articles):
                 error_count += 1
                 continue
         
-        # Commit all inserts
         conn.commit()
         
-        logger.info(f"✓ Inserted {inserted_count} new articles")
-        logger.info(f"✓ Skipped {duplicate_count} duplicates")
+        logger.info(f"Inserted {inserted_count} new articles")
+        logger.info(f"Skipped {duplicate_count} duplicates")
         if error_count > 0:
-            logger.warning(f"⚠ {error_count} errors occurred")
+            logger.warning(f"{error_count} errors occurred")
         
         cursor.close()
         conn.close()
@@ -155,7 +150,6 @@ def load_to_database(articles):
         logger.error(f"Database error: {e}")
         return 0
 
-# Main execution
 if __name__ == "__main__":
     logger.info("=" * 50)
     logger.info("Starting Incremental ETL Pipeline")
@@ -173,12 +167,12 @@ if __name__ == "__main__":
             inserted = load_to_database(articles)
             
             if inserted > 0:
-                logger.info("\n✓ Pipeline completed successfully!")
+                logger.info("\nPipeline completed successfully!")
                 logger.info(f"Loaded {inserted} new articles")
             else:
-                logger.info("\n✓ Pipeline ran but no new articles were added")
+                logger.info("\nPipeline ran but no new articles were added")
         else:
-            logger.info("\n✓ Pipeline completed - no new articles found")
+            logger.info("\nPipeline completed - no new articles found")
             
     except Exception as e:
         logger.error(f"Pipeline failed: {e}")
